@@ -32,7 +32,7 @@ def clean_data(fn):
                 # read peak data as a series
                 df = pd.read_csv(fn, skiprows=start,
                                  nrows=num_peak, delimiter='\t')
-                areas.append(df.Area.values)
+                areas.append(df.values[:, 4])
     values = np.vstack(tuple(itertools.zip_longest(*areas, fillvalue=0)))
     return np.transpose(values)
 
@@ -98,14 +98,19 @@ def process_data():
     size = len(fns)
     idx_col = []
     values = []
+    wrong_fns = []
     # loop through all txt data fns
     for i, fn in enumerate(fns):
         log.info("(%2d/%2d) process %s", i+1, size, fn)
-        idx_col.append(fn.split('.')[0])    # use fn name as index col
-        res = get_area(fn)
-        values.append(res)
+        try:
+            res = get_area(fn)
+            values.append(res)
+            idx_col.append(fn.split('.')[0])    # use fn name as index col
+        except Exception:
+            log.warning("Cannot process fn %s", fn)
+            wrong_fns.append(fn)
     values = np.array(values, dtype=np.float32)
-    return idx_col, values
+    return idx_col, values, wrong_fns
 
 def write_fn(idx_col, arr):
     """Write array into excel."""
@@ -127,6 +132,8 @@ if __name__ == '__main__':
         format='[%(asctime)s %(levelname)s] %(message)s',
         level=logging.DEBUG if debug else logging.INFO
     )
-    idx_col, values = process_data()
+    idx_col, values, wrong_fns = process_data()
     log.info("Write data to result.xlsx")
     df = write_fn(idx_col, values)
+    if wrong_fns:
+        log.warning("Yixiao, check these files, %s", wrong_fns)
