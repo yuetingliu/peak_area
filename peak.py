@@ -110,7 +110,12 @@ def process_data():
 def write_fn(idx_col, arr):
     """Write array into excel."""
     df = pd.DataFrame(arr, columns=COLUMNS, index=idx_col)
+    df.index.name = 'Runs'
+    # columns = [('GC area', col) for col in df.columns]
+    # df.columns = pd.MultiIndex.from_tuples(columns)
+    # df = df.rename_axis([None, 'Runs'], axis=1)
     df.to_excel('result.xlsx')
+    return df
 
 
 if __name__ == '__main__':
@@ -124,4 +129,4 @@ if __name__ == '__main__':
     )
     idx_col, values = process_data()
     log.info("Write data to result.xlsx")
-    write_fn(idx_col, values)
+    df = write_fn(idx_col, values)
