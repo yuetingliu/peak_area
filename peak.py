@@ -9,8 +9,6 @@ from sys import argv
 import numpy as np
 import pandas as pd
 
-log = logging.getLogger(__name__)
-
 ROOT = dirname(abspath(__file__))
 COLUMNS = ('CH4', 'C3H6', 'C3H8', 'C4', 'H2', 'O2',
            'N2', 'CO', 'CO2', 'C2H4', 'C2H6', 'C2H2')
@@ -18,8 +16,11 @@ INDEX = ((3, 4), (1, 4), (1, 5), (1, 6), (3, 1), (3, 2),
          (3, 3), (3, 5), (2, 4), (2, 6), (2, 7), (2, 5))
 PEAK = 'Peak Table'
 
+log = logging.getLogger(__name__)
+
 
 def clean_data(fn):
+    """Extract areas data from raw txt file."""
     areas = []
     with open(fn, 'r') as infile:
         lines = infile.readlines()
@@ -46,30 +47,6 @@ def get_data():
     fns = sorted(fns, key=lambda x: int(x.split('.')[0]))
     return fns
 
-#def load_template(fn):
-#    """Extract index array.
-#
-#    Returns
-#    -------
-#    df : DataFrame
-#        cleaned df
-#    idx : np.ndarray
-#        index array for data area peak lookup
-#    """
-#    # excel fn for lookup names and indices
-#    df = pd.read_excel(fn, index_col=0)
-#    # read ind at
-#    idx_strs = df.iloc[1, :]
-#    idx = []
-#    for idx_str in idx_strs:
-#        ind = [int(num) for num in re.findall('\d', idx_str)]
-#        idx.append(ind)
-#    # remove index string after extraction
-#    df.iloc[1, :] = np.NaN
-#    # make index start with 0
-#    idx = np.array(idx) - 1
-#    return df, idx
-
 
 def get_area(fn):
     """Get area data from fn.
@@ -87,8 +64,9 @@ def get_area(fn):
     res = val[x, y]
     return res
 
+
 def process_data():
-    """Process all data files.
+    """Process all data files at current dir.
 
     Return all area values
     """
@@ -111,6 +89,7 @@ def process_data():
             wrong_fns.append(fn)
     values = np.array(values, dtype=np.float32)
     return idx_col, values, wrong_fns
+
 
 def write_fn(idx_col, arr):
     """Write array into excel."""
@@ -136,4 +115,4 @@ if __name__ == '__main__':
     log.info("Write data to result.xlsx")
     df = write_fn(idx_col, values)
     if wrong_fns:
-        log.warning("Yixiao, check these files, %s", wrong_fns)
+        log.warning("!!!Yixiao, check these files, %s", wrong_fns)
