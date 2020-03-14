@@ -96,14 +96,15 @@ def process_data(path=None):
     return idx_col, values, wrong_fns
 
 
-def write_fn(idx_col, arr):
+def write_fn(idx_col, arr, path):
     """Write array into excel."""
     df = pd.DataFrame(arr, columns=COLUMNS, index=idx_col)
     df.index.name = 'Runs'
     # columns = [('GC area', col) for col in df.columns]
     # df.columns = pd.MultiIndex.from_tuples(columns)
     # df = df.rename_axis([None, 'Runs'], axis=1)
-    df.to_excel('result.xlsx')
+    fn = join(path, 'result.xlsx')
+    df.to_excel(fn)
     return df
 
 
@@ -114,7 +115,7 @@ def process_path(paths):
         idx_col, values, wrong_fns = process_data(path)
         print('')
         log.info("Write data to result.xlsx")
-        df = write_fn(idx_col, values)
+        df = write_fn(idx_col, values, path)
         if wrong_fns:
             log.warning("!!!Yixiao, check these files, %s", wrong_fns)
 
