@@ -107,11 +107,19 @@ def write_fn(idx_col, arr):
     return df
 
 
-if __name__ == '__main__':
-    debug = False
-    if len(argv) == 2 and argv[1] == 'debug':
-        debug = True
+def process_path(paths):
+    for path in paths:
+        log.info("Processing data at %s", path)
+        log.info('-'*20)
+        idx_col, values, wrong_fns = process_data(path)
+        print('')
+        log.info("Write data to result.xlsx")
+        df = write_fn(idx_col, values)
+        if wrong_fns:
+            log.warning("!!!Yixiao, check these files, %s", wrong_fns)
 
+
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="Extract areas of peaks in various channals"
     )
@@ -131,12 +139,4 @@ if __name__ == '__main__':
     )
 
     args.path = args.path or ['.']
-    for path in args.path:
-        log.info("Processing data at %s", path)
-        log.info('-'*20)
-        idx_col, values, wrong_fns = process_data(path)
-        print('')
-    log.info("Write data to result.xlsx")
-    df = write_fn(idx_col, values)
-    if wrong_fns:
-        log.warning("!!!Yixiao, check these files, %s", wrong_fns)
+    process_path(args.path)
