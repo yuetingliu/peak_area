@@ -1,15 +1,15 @@
 """Extract areas of peaks."""
-from os.path import dirname, abspath
+from os.path import dirname, abspath, join
 import os
 import re
 import itertools
 import logging
 from sys import argv
+import argparse
 
 import numpy as np
 import pandas as pd
 
-ROOT = dirname(abspath(__file__))
 COLUMNS = ('CH4', 'C3H6', 'C3H8', 'C4', 'H2', 'O2',
            'N2', 'CO', 'CO2', 'C2H4', 'C2H6', 'C2H2')
 INDEX = ((3, 4), (1, 4), (1, 5), (1, 6), (3, 1), (3, 2),
@@ -38,12 +38,12 @@ def clean_data(fn):
     return np.transpose(values)
 
 
-def get_data():
+def get_data(path):
     """Index all txt data files at current directory.
 
     Sort fns with run number
     """
-    fns = [fn for fn in os.listdir(ROOT) if fn.endswith('.txt')]
+    fns = [fn for fn in os.listdir(path) if fn.endswith('.txt')]
     fns = sorted(fns, key=lambda x: int(x.split('.')[0]))
     return fns
 
@@ -65,23 +65,28 @@ def get_area(fn):
     return res
 
 
-def process_data():
+def process_data(path=None):
     """Process all data files at current dir.
 
     Return all area values
     """
     # get all txt fns
     log.info("Load all data files")
-    fns = get_data()
+    path = path or '.'
+    fns = get_data(path)
     size = len(fns)
+    if not size:
+        log.warning("No txt files found at %s", path)
+        raise RuntimeError
     idx_col = []
     values = []
     wrong_fns = []
     # loop through all txt data fns
     for i, fn in enumerate(fns):
         log.info("(%2d/%2d) process %s", i+1, size, fn)
+        fpath = join(path, fn) 
         try:
-            res = get_area(fn)
+            res = get_area(fpath)
             values.append(res)
             idx_col.append(fn.split('.')[0])    # use fn name as index col
         except Exception:
@@ -107,11 +112,30 @@ if __name__ == '__main__':
     if len(argv) == 2 and argv[1] == 'debug':
         debug = True
 
+    parser = argparse.ArgumentParser(
+        description="Extract areas of peaks in various channals"
+    )
+    parser.add_argument(
+        'path', type=str, nargs='*', default=None,
+        help='path of data'
+    )
+    parser.add_argument(
+        '-d', '--debug', action='store_true',
+        help='enter debug mode'
+    )
+    args = parser.parse_args()
+
     logging.basicConfig(
         format='[%(asctime)s %(levelname)s] %(message)s',
-        level=logging.DEBUG if debug else logging.INFO
+        level=logging.DEBUG if args.debug else logging.INFO
     )
-    idx_col, values, wrong_fns = process_data()
+
+    args.path = args.path or ['.']
+    for path in args.path:
+        log.info("Processing data at %s", path)
+        log.info('-'*20)
+        idx_col, values, wrong_fns = process_data(path)
+        print('')
     log.info("Write data to result.xlsx")
     df = write_fn(idx_col, values)
     if wrong_fns:
